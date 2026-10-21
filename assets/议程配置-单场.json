@@ -1,0 +1,19 @@
+{
+  "_说明": "这是「单场模式」模板：sessions 留空，整段录音按一个议题处理，适合没有明确议程的座谈会 / 临时会议 / 讨论会。有议程时请参考 议程配置-示例.json 填 sessions（每场 start/end 用 24 小时制 HH:MM）。",
+  "code": "2026-11-05 会议",
+  "date": "2026-11-05",
+  "title_en": "Meeting",
+  "scenario": "meeting",
+  "agenda_note": "",
+  "subtitle": "音频与转写全程保存在本机",
+  "summary_file": "会议摘要-双语.md",
+  "board_template": "_看板模板.html",
+  "board_file": "会议看板.html",
+  "board_title": "会议实时摘要",
+  "board_h1": "会议 · 实时摘要",
+  "sessions": [],
+  "delivery": {
+    "md": "会后交付.md",
+    "html": "会后交付.html"
+  }
+}

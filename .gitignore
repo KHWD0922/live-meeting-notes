@@ -1,0 +1,29 @@
+# ---- 运行时产物（不进仓库）----
+__pycache__/
+*.pyc
+*.pyo
+models/
+*.wav
+recording_*.wav
+live_transcript*.txt
+全文转写-*.txt
+会议看板.html
+会议摘要-双语.md
+会后交付*.md
+会后交付*.html
+_topics/
+_summary/
+_record/
+_note_state.json
+_capture.lock
+_watch.lock
+STOP_CAPTURE
+*.tmp
+
+# ---- 本地环境 ----
+.venv/
+venv/
+.env
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>会议实时摘要</title>
+<style>
+:root{
+  --bg:#f7f7f5; --card:#fff; --fg:#1f1f1d; --muted:#6b6b66;
+  --line:rgba(0,0,0,.12); --accent:#0f6e56; --accent-soft:#e1f5ee;
+  --warn:#a32d2d; --warn-soft:#fcebeb;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#1b1b19; --card:#242422; --fg:#ececea; --muted:#a3a39d;
+         --line:rgba(255,255,255,.14); --accent:#5dcaa5; --accent-soft:#0c3a2d;
+         --warn:#f09595; --warn-soft:#3a1d1d; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:15px/1.75 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;}
+.wrap{max-width:940px;margin:0 auto;padding:0 20px 80px}
+header{position:sticky;top:0;z-index:10;background:var(--bg);
+  border-bottom:1px solid var(--line);padding:14px 0 10px;margin-bottom:18px}
+h1{font-size:19px;font-weight:500;margin:0 0 4px}
+.sub{font-size:13px;color:var(--muted)}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:13px}
+.now{background:var(--accent-soft);color:var(--accent);padding:3px 10px;border-radius:999px;font-weight:500}
+button{font:inherit;font-size:13px;padding:4px 12px;border:1px solid var(--line);
+  border-radius:8px;background:var(--card);color:var(--fg);cursor:pointer}
+button:hover{border-color:var(--accent);color:var(--accent)}
+label{display:flex;align-items:center;gap:5px;color:var(--muted);cursor:pointer;font-size:13px}
+nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:20px;
+  border-bottom:1px solid var(--line)}
+nav span{flex:0 0 auto;font-size:12.5px;padding:4px 10px;border-radius:999px;
+  border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+nav span.on{background:var(--accent);border-color:var(--accent);color:#fff}
+nav span.done{color:var(--fg);border-color:var(--accent)}
+h2{font-size:16px;font-weight:500;margin:34px 0 10px;padding-bottom:6px;
+  border-bottom:1px solid var(--line)}
+h3{font-size:15px;font-weight:500;margin:26px 0 8px;color:var(--accent)}
+h4{font-size:14px;font-weight:500;margin:16px 0 6px;color:var(--muted)}
+p{margin:8px 0}
+ul,ol{margin:8px 0;padding-left:22px}
+li{margin:5px 0}
+strong{font-weight:500}
+blockquote{margin:12px 0;padding:8px 14px;border-left:3px solid var(--accent);
+  background:var(--card);color:var(--muted);border-radius:0 8px 8px 0}
+code{font-family:ui-monospace,Consolas,monospace;font-size:13px;
+  background:var(--card);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--card);font-weight:500}
+.empty{color:var(--muted);font-size:14px;padding:40px 0;text-align:center}
+/* ---- 实时原声面板 ---- */
+.live{border:1px solid var(--line);border-radius:10px;background:var(--card);
+  overflow:hidden;margin-bottom:22px}
+.live-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+.live-hd b{font-weight:600;color:var(--accent)}
+.live-hd .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);
+  animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.live-body{height:236px;overflow-y:auto;padding:6px 12px}
+.ln{display:flex;gap:9px;padding:3px 0;border-bottom:1px dashed var(--line);
+  font-size:13.5px;line-height:1.6}
+.ln:last-child{border-bottom:0}
+.ln .ts{flex:0 0 auto;color:var(--muted);font-size:12px;padding-top:2px;
+  font-family:ui-monospace,Consolas,monospace}
+.ln .tx{flex:1 1 auto;word-break:break-word}
+.ln.fresh .tx{color:var(--accent)}
+.live-ft{padding:6px 12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>会议 · 实时摘要</h1>
+  <div class="sub">会议时间与地点 · 转写与整理全程在本机完成</div>
+  <div class="bar">
+    <span class="now" id="now">—</span>
+    <span class="sub" id="clock">—</span>
+    <button onclick="location.reload()">刷新</button>
+    <label><input type="checkbox" id="auto" checked>自动刷新（30 秒）</label>
+  </div>
+  <div class="sub" style="margin-top:6px">摘要层：由点点整理（按小时 / 说「更新摘要」立即刷新） ｜ 实时原声层：本机循环刷新，不依赖任何模型</div>
+</header>
+<nav id="agenda"></nav>
+
+<section class="live">
+  <div class="live-hd">
+    <span class="dot"></span><b>实时原声</b>
+    <span class="sub" id="liveMeta">—</span>
+  </div>
+  <div class="live-body" id="liveBody"><div class="empty">正在载入…</div></div>
+  <div class="live-ft">最新在最上 ｜ 本机转写，未上传云端 ｜ 已自动过滤静音幻觉</div>
+</section>
+
+<main id="doc"></main>
+</div>
+
+<script id="src" type="text/markdown">
+@@CONTENT@@
+</script>
+
+<script id="live" type="application/json">
+@@LIVEFEED@@
+</script>
+
+<script>
+var AGENDA=[
+ ["09:00","Session One","第一场"],
+ ["09:40","Session Two","第二场"]
+];
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function inline(s){
+  return esc(s)
+    .replace(/`([^`]+)`/g,"<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/(^|[\s(])\*([^*\n]+)\*/g,"$1<em>$2</em>");
+}
+function md(src){
+  var L=src.split(/\r?\n/),out=[],i=0;
+  function closeList(){ }
+  while(i<L.length){
+    var l=L[i];
+    if(/^\s*$/.test(l)){i++;continue;}
+    var h=l.match(/^(#{1,4})\s+(.*)$/);
+    if(h){out.push("<h"+(h[1].length+1)+">"+inline(h[2])+"</h"+ (h[1].length+1)+">");i++;continue;}
+    if(/^\s*(---|\*\*\*)\s*$/.test(l)){out.push("<hr>");i++;continue;}
+    if(/^\s*\|/.test(l)&&/^\s*\|?[\s:|-]+\|?\s*$/.test(L[i+1]||"")){
+      var head=l.split("|").slice(1,-1).map(function(c){return c.trim();});
+      i+=2;var rows=[];
+      while(i<L.length&&/^\s*\|/.test(L[i])){
+        rows.push(L[i].split("|").slice(1,-1).map(function(c){return c.trim();}));i++;
+      }
+      var t="<table><thead><tr>"+head.map(function(c){return "<th>"+inline(c)+"</th>";}).join("")+
+            "</tr></thead><tbody>"+rows.map(function(r){
+              return "<tr>"+r.map(function(c){return "<td>"+inline(c)+"</td>";}).join("")+"</tr>";
+            }).join("")+"</tbody></table>";
+      out.push(t);continue;
+    }
+    if(/^\s*>\s?/.test(l)){
+      var b=[];
+      while(i<L.length&&/^\s*>\s?/.test(L[i])){b.push(L[i].replace(/^\s*>\s?/,""));i++;}
+      out.push("<blockquote>"+b.map(inline).join("<br>")+"</blockquote>");continue;
+    }
+    if(/^\s*[-*+]\s+/.test(l)){
+      var u=[];
+      while(i<L.length&&/^\s*[-*+]\s+/.test(L[i])){u.push(L[i].replace(/^\s*[-*+]\s+/,""));i++;}
+      out.push("<ul>"+u.map(function(x){return "<li>"+inline(x)+"</li>";}).join("")+"</ul>");continue;
+    }
+    if(/^\s*\d+[.)]\s+/.test(l)){
+      var o=[];
+      while(i<L.length&&/^\s*\d+[.)]\s+/.test(L[i])){o.push(L[i].replace(/^\s*\d+[.)]\s+/,""));i++;}
+      out.push("<ol>"+o.map(function(x){return "<li>"+inline(x)+"</li>";}).join("")+"</ol>");continue;
+    }
+    var p=[l];i++;
+    while(i<L.length&&!/^\s*$/.test(L[i])&&!/^(#{1,4}\s|>|\s*[-*+]\s|\s*\d+[.)]\s|```)/.test(L[i])
+          &&!/^\s*(---|\*\*\*)\s*$/.test(L[i])){p.push(L[i]);i++;}
+    out.push("<p>"+p.map(inline).join(" ")+"</p>");
+  }
+  return out.join("\n");
+}
+
+var raw=document.getElementById("src").textContent;
+/* 哨兵拆开写：这里绝不能直接写出那个占位符的字面量（两个 @ 夹 CONTENT 再两个 @）。
+   否则 build_board.py 的 str.replace 会连这里一起替换，
+   把整篇 markdown 塞进 JS 字符串里 → 换行截断字符串 → 整段脚本语法错误 → 页面空白。 */
+var PH="@@CONT"+"ENT@@";
+if(raw.indexOf(PH)>=0||!/\S/.test(raw)){
+  document.getElementById("doc").innerHTML=
+    '<p class="empty">尚无内容。<br>会议开始后，本页由「Seminar 会议实时笔记整理」任务每小时自动更新。<br>'+
+    '也可在对话里说一声「更新摘要」，立刻生成。</p>';
+}else{
+  document.getElementById("doc").innerHTML=md(raw);
+}
+
+var LIVE={};
+try{LIVE=JSON.parse(document.getElementById("live").textContent||"{}")||{};}catch(e){LIVE={};}
+(function paintLive(){
+  var box=document.getElementById("liveBody"),meta=document.getElementById("liveMeta");
+  if(!box)return;
+  var arr=(LIVE&&LIVE.lines&&LIVE.lines.length)?LIVE.lines:[];
+  if(!arr.length){
+    box.innerHTML='<div class="empty">暂无实时内容 —— 转写尚未启动，或还没拾到有效语音。</div>';
+  }else{
+    var h="";
+    for(var i=0;i<arr.length;i++){
+      h+='<div class="ln'+(i===0?' fresh':'')+'"><span class="ts">'+esc(arr[i].t)+
+         '</span><span class="tx">'+esc(arr[i].x)+'</span></div>';
+    }
+    box.innerHTML=h;
+  }
+  if(meta){
+    meta.innerHTML= LIVE.generated
+      ? ('页面生成 '+esc(LIVE.generated)+' ｜ 有效 '+LIVE.kept+' / 原始 '+LIVE.total+
+         ' 行 ｜ 最后一条 '+esc(LIVE.lastTs))
+      : '—';
+  }
+})();
+
+function nowMin(){var d=new Date();return d.getHours()*60+d.getMinutes();}
+function toMin(s){var p=s.split(":");return (+p[0])*60+(+p[1]);}
+function paint(){
+  var n=nowMin(),nav=document.getElementById("agenda"),html="",cur=-1;
+  for(var i=0;i<AGENDA.length;i++){
+    if(n>=toMin(AGENDA[i][0]))cur=i;
+  }
+  for(var j=0;j<AGENDA.length;j++){
+    var cls=j===cur?"on":(j<cur?"done":"");
+    html+='<span class="'+cls+'">'+AGENDA[j][0]+" "+AGENDA[j][2]+"</span>";
+  }
+  nav.innerHTML=html;
+  document.getElementById("now").textContent=cur<0?"会议未开始":
+    (cur===AGENDA.length-1?"进行中 · "+AGENDA[cur][1]:"进行中 · "+AGENDA[cur][1]);
+  var d=new Date();
+  document.getElementById("clock").textContent=
+    d.toLocaleDateString("zh-CN")+" "+d.toLocaleTimeString("zh-CN",{hour12:false});
+}
+paint();
+setInterval(paint,30000);
+
+var auto=document.getElementById("auto");
+setInterval(function(){
+  if(auto.checked){
+    try{sessionStorage.setItem("scrollY",String(window.scrollY));}catch(e){}
+    location.reload();
+  }
+},30000);
+try{
+  var y=sessionStorage.getItem("scrollY");
+  if(y!==null){window.scrollTo(0,parseInt(y,10));sessionStorage.removeItem("scrollY");}
+}catch(e){}
+</script>
+</body>
+</html>

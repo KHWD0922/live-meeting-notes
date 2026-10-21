@@ -1,0 +1,56 @@
+{
+  "_说明": "有议程时用这个：把本文件复制成 议程配置.json 再改。id 可留空（自动 T1..Tn）；start/end 用 24 小时制 HH:MM；茶歇/午餐场次的 en 或 zh 里带 Break/Lunch/茶歇/午餐 即可被识别为休息段。scenario 可选：meeting / seminar / panel / training / webinar。",
+  "code": "2026-11-05 客户大会",
+  "date": "2026-11-05",
+  "title_en": "Client Advisory Day",
+  "scenario": "meeting",
+  "agenda_note": "按主办方最终版议程填写，现场顺延以讲者为准",
+  "subtitle": "音频与转写全程保存在本机",
+  "summary_file": "会议摘要-双语.md",
+  "board_template": "_看板模板.html",
+  "board_file": "会议看板.html",
+  "board_title": "客户大会实时摘要",
+  "board_h1": "客户大会 · 实时摘要",
+  "sessions": [
+    {
+      "id": "T1",
+      "start": "09:00",
+      "end": "09:30",
+      "en": "Opening & Introduction",
+      "zh": "开场与介绍",
+      "speakers": "—",
+      "note": "定调"
+    },
+    {
+      "id": "T2",
+      "start": "09:30",
+      "end": "11:00",
+      "en": "Keynote: Market Outlook",
+      "zh": "主题演讲：市场展望",
+      "speakers": "—",
+      "note": "主线判断"
+    },
+    {
+      "id": "T3",
+      "start": "11:00",
+      "end": "11:15",
+      "en": "Break",
+      "zh": "茶歇",
+      "speakers": "—",
+      "note": "不生成要点"
+    },
+    {
+      "id": "T4",
+      "start": "11:15",
+      "end": "12:15",
+      "en": "Panel Discussion",
+      "zh": "座谈讨论",
+      "speakers": "—",
+      "note": "多方观点"
+    }
+  ],
+  "delivery": {
+    "md": "会后交付.md",
+    "html": "会后交付.html"
+  }
+}

@@ -1,0 +1,53 @@
+# ============================================================
+#  术语表  ——  会议专有名词表（每场会前必改）
+# ============================================================
+#  为什么要填：Whisper 对人名/公司名/缩写最容易错，而这类错误
+#  不加术语表基本无解。实测：Kubernetes 会被转成
+#  "Cooper Netes"；加了表就对了。
+#
+#  两种行：
+#    普通行     -> 喂给模型当提示词，提升识别概率
+#    fix: 行    -> 转写完成后做确定性替换，格式：fix: 错误写法 = 正确写法
+#  以 # 开头的是注释，两种都不参与。
+#
+#  ⚠️ 提示词部分（普通行）生效总长上限 800 字符，超出自动截断；
+#     提示词写太长反而会拖慢并降低质量，只写真正会出现的词。
+#  ⚠️ fix: 是整词匹配（前后不能是字母），所以
+#     "fix: Jane Dow = Jane Doe" 不会把本来正确的 "Jane Doe" 改成 "Jane Doee"。
+#     发现某条误伤，直接删掉那一行。
+#  ⚠️ 改完术语表要**重启采集**才生效（会中断当前录音，建议在茶歇改）。
+# ============================================================
+
+
+# ── 1. 讲者 / 参会人姓名（最重要的一栏）─────────────────────
+Speakers: 张三, 李四, John Smith, Jane Doe
+
+
+# ── 2. 议题名（用议程原标题，帮助分段与纠错）────────────────
+Sessions: Opening and Introduction, Closing Remarks
+
+
+# ── 3. 公司 / 产品 / 业务术语 ───────────────────────────────
+Companies: Acme Corp, Globex, Contoso, Fabrikam
+Terms: agentic AI, LLM, RAG, MLOps, DevSecOps, cybersecurity, ROI, TCO
+
+
+# ── 4. 纠错表（转写后自动替换）──────────────────────────────
+#    格式：fix: 模型吐出来的错的样子 = 正确写法
+# 4.1 公司名
+fix: Acme Crop = Acme Corp
+fix: Globecks = Globex
+
+# 4.2 人名（把常见拼错列全）
+fix: Jane Dow = Jane Doe
+fix: Jon Smith = John Smith
+
+# 4.3 产品 / 术语
+fix: Cooper Netes = Kubernetes
+fix: Post Gres = PostgreSQL
+fix: Dev Sec Ops = DevSecOps
+fix: E B I T D A = EBITDA
+
+
+# ── 5. 会后补充（听到新错法就加到这里，下次自动生效）─────────
+# fix: xxx = yyy
